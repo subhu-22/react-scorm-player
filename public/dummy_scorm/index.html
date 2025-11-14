@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dummy SCORM Course</title>
+    <style>
+        /* Your Provided Styles (Causes the centered, dark-blank look) */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex; /* Flexbox for centering */
+            justify-content: center;
+            background-color: #1e1e1e; /* Dark background */
+            color: #fff;
+            height: 100vh;
+            align-items: center;
+        }
+
+        .container {
+            background-color: #fff;
+            color: #000;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 600px; /* Narrow content area */
+            width: 90%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Grouping for the main action buttons */
+        .button-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px; /* Spacing between buttons */
+        }
+
+        button {
+            padding: 10px 15px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+
+        #output {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #e9e9e9;
+            min-height: 50px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-y: auto; /* Allow scrolling if many logs */
+        }
+        
+        /* Style for the text at the bottom */
+        .footer {
+            position: absolute;
+            bottom: 10px;
+            color: #ccc;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Dummy SCORM Course</h2>
+        <p>This is a test SCO (Sharable Content Object) for SCORM 2004.</p>
+        <p>Interact with the buttons below to test SCORM API calls.</p>
+        
+        <div class="button-group">
+            <button id="initBtn">Initialize</button>
+            <button id="setBtn">Set Completion Status to Completed</button>
+            <button id="getBtn">Get Completion Status</button>
+            <button id="commitBtn">Commit</button>
+        </div>
+        
+        <button id="terminateBtn">Terminate</button>
+        
+        <div id="output">
+            </div>
+    </div>
+    
+    <div class="footer">Simple SCORM 2004 dev player</div>
+
+    <script>
+        // SCORM 2004 API Driver for Dummy Course
+        let API = null;
+
+        // Function to find the SCORM API in parent windows
+        function findAPI(win) {
+          let depth = 0;
+          let maxDepth = 10; // Prevent infinite loop
+          while (win && depth < maxDepth) {
+            // Check for the SCORM 2004 API object name
+            if (win.API_1484_11) {
+              return win.API_1484_11;
+            }
+            // Move up one window level
+            if (win.parent === win) break; // Check to prevent infinite loop on top window
+            win = win.parent;
+            depth++;
+          }
+          return null;
+        }
+
+        // Initialize API when page loads
+        window.addEventListener('load', function () {
+          API = findAPI(window);
+          
+          // Clear any initial content and add the status message
+          const outputElement = document.getElementById('output');
+          outputElement.innerHTML = ''; 
+
+          if (API) {
+            console.log('SCORM API found');
+            outputElement.innerHTML += '<p>SCORM API initialized successfully.</p>';
+          } else {
+            console.error('SCORM API not found');
+            outputElement.innerHTML += '<p>Error: SCORM API not found.</p>';
+          }
+
+          // Helper function to append results
+          function logResult(action, result) {
+             outputElement.innerHTML += `<p><strong>${action}:</strong> ${result}</p>`;
+             outputElement.scrollTop = outputElement.scrollHeight; // Auto-scroll to bottom
+          }
+          
+          // Set up button event listeners
+          document.getElementById('initBtn').addEventListener('click', function () {
+            if (API) {
+              const result = API.Initialize('');
+              logResult('Initialize', result);
+            }
+          });
+
+          document.getElementById('setBtn').addEventListener('click', function () {
+            if (API) {
+              const result = API.SetValue('cmi.completion_status', 'completed');
+              logResult('Set Completion Status', result);
+            }
+          });
+
+          document.getElementById('getBtn').addEventListener('click', function () {
+            if (API) {
+              const value = API.GetValue('cmi.completion_status');
+              logResult('Get Completion Status', value);
+            }
+          });
+
+          document.getElementById('commitBtn').addEventListener('click', function () {
+            if (API) {
+              const result = API.Commit('');
+              logResult('Commit', result);
+            }
+          });
+
+          document.getElementById('terminateBtn').addEventListener('click', function () {
+            if (API) {
+              const result = API.Terminate('');
+              logResult('Terminate', result);
+            }
+          });
+        });
+    </script>
+</body>
+</html>
