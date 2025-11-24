@@ -3,15 +3,49 @@ import React, { useEffect, useRef, useState } from "react";
 
 const STORAGE_KEY_PREFIX = "scorm2004_";
 
+// Full SCORM 2004 default data (with iSpring fields)
 const defaultScormData = {
+  // Core SCORM runtime
   "cmi.completion_status": "incomplete",
   "cmi.success_status": "unknown",
   "cmi.score.scaled": "",
+  "cmi.score.raw": "",
+  "cmi.score.min": "0",
+  "cmi.score.max": "100",
+
+  // Location / timing
   "cmi.location": "",
   "cmi.suspend_data": "",
   "cmi.launch_data": "",
   "cmi.session_time": "PT0S",
+  "total_time": "0",
   "cmi.exit": "",
+
+  // Extra SCORM metadata
+  "cmi.completion_threshold": "",
+  "cmi.credit": "credit",
+  "cmi.entry": "",
+  "cmi.max_time_allowed": "",
+  "cmi.mode": "normal",
+  "cmi.scaled_passing_score": "",
+  "cmi.time_limit_action": "",
+
+  // Structured objects
+  "comments_from_learner": { childArray: [] },
+  "comments_from_lms": { childArray: [] },
+  "interactions": { childArray: [] },
+  "objectives": { childArray: [] },
+  "learner_preference": { audio_level: "1", language: "", delivery_speed: "1", audio_captioning: "0" },
+
+  // Custom / LMS fields
+  "learner_id": "",
+  "learner_name": "",
+  "learner_email": "",
+  "pdf_content_id": null,
+  "project_id": null,
+
+  // Convenience
+  "cmi.progress_measure": "",
 };
 
 function makeStorageKey(courseId) {
@@ -19,7 +53,7 @@ function makeStorageKey(courseId) {
 }
 
 function ScormPlayer({
-  coursePath = "/scormzip/res/index.html", // adjusted path
+  coursePath = "/scormzip/res/index.html",
   courseId = "scorm-2004-sample-course",
   autosaveOnCommit = true,
   commitEndpoint = "/api/scorm/save",
@@ -31,12 +65,11 @@ function ScormPlayer({
   const dataRef = useRef({ ...defaultScormData });
   const startTimeRef = useRef(null);
 
+  /* ---------- Persist/load ---------- */
   function loadPersisted() {
     try {
       const raw = localStorage.getItem(makeStorageKey(courseId));
-      if (raw) {
-        dataRef.current = { ...dataRef.current, ...JSON.parse(raw) };
-      }
+      if (raw) dataRef.current = { ...dataRef.current, ...JSON.parse(raw) };
     } catch (e) {
       console.warn("SCORM: failed to load persisted state", e);
     }
@@ -53,10 +86,19 @@ function ScormPlayer({
   function addSessionTimeTo(durationIso) {
     const match = (durationIso || "").match(/^PT(\d+)S$/);
     const already = match ? parseInt(match[1], 10) : 0;
-    const elapsedSec = Math.max(0, Math.floor((Date.now() - startTimeRef.current) / 1000));
+    const elapsedSec = Math.max(
+      0,
+      Math.floor((Date.now() - (startTimeRef.current || Date.now())) / 1000)
+    );
+
+    // Update total_time
+    const prevTotal = parseInt(dataRef.current.total_time || "0", 10) || 0;
+    dataRef.current.total_time = String(prevTotal + elapsedSec);
+
     return `PT${already + elapsedSec}S`;
   }
 
+  /* ---------- SCORM API ---------- */
   function createScormApi() {
     return {
       Initialize: function () {
@@ -83,14 +125,25 @@ function ScormPlayer({
           return "";
         }
         lastErrorRef.current = "0";
-        return dataRef.current[element] || "";
+        const val = dataRef.current[element];
+        if (element === "cmi.suspend_data" && typeof val === "object") return JSON.stringify(val);
+        return val || "";
       },
       SetValue: function (element, value) {
         if (!element) {
           lastErrorRef.current = "201";
           return "false";
         }
-        dataRef.current[element] = value;
+        if (element === "cmi.suspend_data" && typeof value === "object") {
+          try {
+            dataRef.current[element] = JSON.stringify(value);
+          } catch (e) {
+            lastErrorRef.current = "101";
+            return "false";
+          }
+        } else {
+          dataRef.current[element] = value;
+        }
         lastErrorRef.current = "0";
         return "true";
       },
@@ -117,40 +170,46 @@ function ScormPlayer({
         return "true";
       },
       GetLastError: () => lastErrorRef.current || "0",
-      GetErrorString: (code) => ({
-        "0": "No error",
-        "101": "General exception",
-        "201": "Invalid argument error",
-        "301": "Not initialized",
-      }[String(code)] || "Unknown error"),
+      GetErrorString: (code) =>
+        ({
+          "0": "No error",
+          "101": "General exception",
+          "201": "Invalid argument error",
+          "301": "Not initialized",
+        }[String(code)] || "Unknown error"),
       GetDiagnostic: function (code) {
         return this.GetErrorString(code);
       },
     };
   }
 
+  /* ---------- Hook / expose API ---------- */
   useEffect(() => {
     const api = createScormApi();
     window.API_1484_11 = api;
+
     return () => {
       if (window.API_1484_11 === api) delete window.API_1484_11;
     };
   }, [courseId]);
 
+  /* ---------- UI ---------- */
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <div style={{ padding: 8, borderBottom: "1px solid #eee", display: "flex", gap: 12, alignItems: "center" }}>
         <strong>SCORM Player</strong>
         <span>Course: {courseId}</span>
         <span>Initialized: {String(initialized)}</span>
+
         <button
           onClick={() => {
-            window.API_1484_11?.Commit("");
+            window.API_1484_11?.Commit();
             alert("Committed (localStorage). If server endpoint configured, a POST was attempted.");
           }}
         >
           Commit (save)
         </button>
+
         <button
           onClick={() => {
             localStorage.removeItem(makeStorageKey(courseId));

@@ -6,7 +6,12 @@ export default {
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {fontFamily: {
+        'dm-sans': ['DM Sans', 'sans-serif'],
+        'inter': ['Inter', 'sans-serif'],
+        'public-sans': ['Public Sans', 'sans-serif'],
+        'nunito-sans': ['Nunito Sans', 'sans-serif'],
+      },},
   },
   plugins: [],
 }
