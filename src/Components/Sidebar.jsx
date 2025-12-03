@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   FileText,
   X,
+  Cloud,
 } from "lucide-react";
 import NavItem from "./NavItem.jsx";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -51,6 +52,7 @@ const Sidebar = ({
   const mainNav = [
     { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
     { label: "My Courses", icon: BookOpen, path: "mycourses" },
+    { label: "Bulk Upload", icon: Cloud, path: "bulk" },
     { label: "Reports", icon: FileText, path: "/reports" },
     { label: "Profile", icon: User, path: "/profile" },
     { label: "Admin Settings", icon: Settings, path: "/admin" },
@@ -192,7 +194,11 @@ const Sidebar = ({
                       key={key}
                       onClick={() => {
                         setCurrentCourseKey(key);
-                        navigate(`/player?courseId=${course.id}&coursePath=${encodeURIComponent(course.path)}`);
+                        navigate(
+                          `/player?courseId=${
+                            course.id
+                          }&coursePath=${encodeURIComponent(course.path)}`
+                        );
                         if (isMobile) setMobileOpen(false);
                       }}
                       className={`w-full text-left p-2 rounded-lg transition-colors duration-150 flex flex-col ${
@@ -220,7 +226,13 @@ const Sidebar = ({
                       key={key}
                       onClick={() => {
                         setCurrentCourseKey(key);
-                        navigate(`/player?courseId=${courseCatalog[key].id}&coursePath=${encodeURIComponent(courseCatalog[key].path)}`);
+                        navigate(
+                          `/player?courseId=${
+                            courseCatalog[key].id
+                          }&coursePath=${encodeURIComponent(
+                            courseCatalog[key].path
+                          )}`
+                        );
                         if (isMobile) setMobileOpen(false);
                       }}
                       title={courseCatalog[key].title}

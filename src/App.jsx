@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard.jsx";
 import { createTheme, ThemeProvider, CssBaseline } from "@mui/material";
 import MyCoursesPage from "./pages/MyCoursesPage.jsx";
 import PlayerPage from "./pages/PlayerPage.jsx";
+import Dropbox from "./Components/bulk-upload/Dropbox.jsx";
 
 // ⭐️ 1. Define Centralized Navigation Data (for both Sidebar and Topnav)
 const NAV_LINKS = [
@@ -209,12 +210,25 @@ const App = () => {
 
               <main className="flex-1 overflow-auto p-4 md:p-6">
                 <Routes>
-                  <Route path="mycourses" element={<MyCoursesPage setCurrentCourseKey={setCurrentCourseKey} />} />
+                  <Route
+                    path="mycourses"
+                    element={
+                      <MyCoursesPage
+                        setCurrentCourseKey={setCurrentCourseKey}
+                      />
+                    }
+                  />
+                  <Route path="bulk" element={<Dropbox />} />
                   <Route
                     path="/dashboard"
                     element={<Dashboard theme={theme} />}
                   />
-                  <Route path="/player" element={<PlayerPage setCurrentCourseKey={setCurrentCourseKey} />} />
+                  <Route
+                    path="/player"
+                    element={
+                      <PlayerPage setCurrentCourseKey={setCurrentCourseKey} />
+                    }
+                  />
                 </Routes>
               </main>
 
