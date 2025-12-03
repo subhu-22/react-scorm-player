@@ -119,7 +119,7 @@ const Dropbox = () => {
                       <input
                         type="file"
                         multiple
-                        accept=".zip"
+                        accept=".zip,.xlsx,.csv,.img,.png,.mp4"
                         className="hidden"
                         onChange={handleUpload}
                       />
